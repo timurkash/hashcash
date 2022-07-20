@@ -15,6 +15,7 @@ type HashCashData struct {
 	Resource   string
 	Rand       string
 	Counter    int
+	hash       []byte
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -27,11 +28,11 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-func (h *HashCashData) IsHashCorrect(hash []byte) bool {
-	if h.ZerosCount > len(hash) {
+func (h *HashCashData) IsHashCorrect() bool {
+	if h.ZerosCount > len(h.hash) {
 		return false
 	}
-	for _, ch := range hash[:h.ZerosCount] {
+	for _, ch := range h.hash[:h.ZerosCount] {
 		if ch != 0 {
 			return false
 		}
@@ -43,15 +44,20 @@ func (h *HashCashData) Stringify() []byte {
 	return []byte(fmt.Sprintf("%d:%d:%d:%s::%s:%d", h.Version, h.ZerosCount, h.Date, h.Resource, h.Rand, h.Counter))
 }
 
-func (h *HashCashData) GetHash() []byte {
+func (h *HashCashData) PrintHash() {
+	fmt.Printf("%x\n", h.hash)
+}
+
+func (h *HashCashData) CalcHash() {
 	hash := sha256.New()
 	hash.Write(h.Stringify())
-	return hash.Sum(nil)
+	h.hash = hash.Sum(nil)
 }
 
 func (h *HashCashData) ComputeCounter(maxIterations int) error {
 	for h.Counter <= maxIterations || maxIterations <= 0 {
-		if h.IsHashCorrect(h.GetHash()) {
+		h.CalcHash()
+		if h.IsHashCorrect() {
 			return nil
 		}
 		h.Counter++
@@ -79,9 +85,10 @@ func main() {
 	if err := hashCash.ComputeCounter(1_000_000); err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Printf("%v\n", hashCash)
+	fmt.Printf("%+v\n", hashCash)
 	fmt.Println("=======")
 	fmt.Println("after receiving hash and has to be verified")
-	hash := hashCash.GetHash()
-	fmt.Printf("%x %v\n", string(hash), hashCash.IsHashCorrect(hash))
+	hashCash.CalcHash()
+	hashCash.PrintHash()
+	fmt.Println(hashCash.IsHashCorrect())
 }
