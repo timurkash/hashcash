@@ -34,6 +34,10 @@ func RandStringRunes(n int) string {
 }
 
 func (h *HashCashData) IsHashCorrect() bool {
+	if h.hash == nil {
+		log.Println("hash not calculated")
+		return false
+	}
 	if h.ZerosCount > len(h.hash) {
 		return false
 	}
@@ -50,7 +54,15 @@ func (h *HashCashData) Stringify() []byte {
 }
 
 func (h *HashCashData) PrintHash() {
+	if h.hash == nil {
+		log.Println("hash not calculated")
+		return
+	}
 	fmt.Printf("%x\n", h.hash)
+}
+
+func (h *HashCashData) ClearHash() {
+	h.hash = nil
 }
 
 func (h *HashCashData) CalcHash() {
@@ -93,6 +105,7 @@ func main() {
 	fmt.Printf("%+v\n", hashCash)
 	fmt.Println("=======")
 	fmt.Println("after receiving hash and has to be verified")
+	hashCash.ClearHash()
 	hashCash.CalcHash()
 	hashCash.PrintHash()
 	fmt.Println(hashCash.IsHashCorrect())
