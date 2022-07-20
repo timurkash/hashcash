@@ -18,6 +18,11 @@ type HashCashData struct {
 	hash       []byte
 }
 
+const (
+	complexity   = 3
+	maxIteration = 100_000_000
+)
+
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func RandStringRunes(n int) string {
@@ -77,12 +82,12 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	hashCash := &HashCashData{
 		Version:    1,
-		ZerosCount: 2,
+		ZerosCount: complexity,
 		Date:       date.Unix(),
 		Resource:   clientInfo,
 		Rand:       RandStringRunes(10),
 	}
-	if err := hashCash.ComputeCounter(1_000_000); err != nil {
+	if err := hashCash.ComputeCounter(maxIteration); err != nil {
 		log.Fatalln(err)
 	}
 	fmt.Printf("%+v\n", hashCash)
