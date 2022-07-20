@@ -26,31 +26,27 @@ func RandStringRunes(n int) string {
 	}
 	return string(b)
 }
-func (h *HashCashData) Stringify() []byte {
-	return []byte(fmt.Sprintf("%d:%d:%d:%s::%s:%d", h.Version, h.ZerosCount, h.Date, h.Resource, h.Rand, h.Counter))
-}
-
-func sha256Hash(data []byte) []byte {
-	h := sha256.New()
-	h.Write(data)
-	bs := h.Sum(nil)
-	return []byte(fmt.Sprintf("%x", bs))
-}
 
 func (h *HashCashData) IsHashCorrect(hash []byte) bool {
 	if h.ZerosCount > len(hash) {
 		return false
 	}
 	for _, ch := range hash[:h.ZerosCount] {
-		if ch != '0' {
+		if ch != 0 {
 			return false
 		}
 	}
 	return true
 }
 
+func (h *HashCashData) Stringify() []byte {
+	return []byte(fmt.Sprintf("%d:%d:%d:%s::%s:%d", h.Version, h.ZerosCount, h.Date, h.Resource, h.Rand, h.Counter))
+}
+
 func (h *HashCashData) GetHash() []byte {
-	return sha256Hash(h.Stringify())
+	hash := sha256.New()
+	hash.Write(h.Stringify())
+	return hash.Sum(nil)
 }
 
 func (h *HashCashData) ComputeCounter(maxIterations int) error {
@@ -75,18 +71,17 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	hashCash := &HashCashData{
 		Version:    1,
-		ZerosCount: 5,
+		ZerosCount: 2,
 		Date:       date.Unix(),
 		Resource:   clientInfo,
 		Rand:       RandStringRunes(10),
-		Counter:    0,
 	}
-	if err := hashCash.ComputeCounter(10_000_000); err != nil {
+	if err := hashCash.ComputeCounter(1_000_000); err != nil {
 		log.Fatalln(err)
 	}
 	fmt.Printf("%v\n", hashCash)
 	fmt.Println("=======")
 	fmt.Println("after receiving hash and has to be verified")
 	hash := hashCash.GetHash()
-	fmt.Println(string(hash), hashCash.IsHashCorrect(hash))
+	fmt.Printf("%x %v\n", string(hash), hashCash.IsHashCorrect(hash))
 }
